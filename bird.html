@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Bird</title>
+    </head>
+    <body>
+        <div>Score: <span id="score">0</span></div>
+        <canvas id="gameCanvas" width=300 height=300></canvas>
+        <br>
+        <button id="reset" onclick=reset()>Reset</button>
+    </body>
+    <script>
+        const gameCanvas = document.getElementById("gameCanvas");
+        const context = gameCanvas.getContext("2d");
+
+        context.strokeRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+        //declare bird variable w/ two coordinates
+        let bird = {x: 85, y: 150};
+
+        const birdLength = 10; //bird length
+        const birdHeight = 10; //bird height
+        
+        //initialize empty pipes array
+        let pipes = [];
+        
+        var pipeHeight = 0; //random number for where pipes go
+        var pipeGap = 35; //distance between pipes
+        var pipeWidth = 20; //width of pipes
+
+        getPipes();
+        addPipes();
+        drawPipes();
+
+        var jumpHeight = -4.25; //jump height
+
+        let vy = 0; //gravity
+        let vx = 1.5; //pipe speed
+
+        var score = 0; //user score
+        var gameOver = false; //ends game
+
+        let gameGravity = null;
+        let gamePipes = null;
+
+        drawBird();
+
+        document.addEventListener("keydown", function(e) {
+            if (e.keyCode === 32) {
+                jump();
+            }
+        })
+
+        document.addEventListener("click", jump);
+
+        main();
+
+        function main() {
+            if (gameOver) {
+                return; //ends game
+            }
+
+            requestAnimationFrame(main)
+            clearCanvas();
+            drawBird();
+            drawPipes();
+            bird.y += vy
+            pipes.forEach(function(pipe) {
+                pipe[0].x -= vx;
+                pipe[1].x -= vx;
+
+                pipe.forEach(function(pipet) {
+                    if (collision(bird, pipet)) {
+                        gameOver = true;
+                    }
+                });
+
+                if (pipe[0].x === 84) {
+                    score++;
+                    document.getElementById("score").innerHTML = score;
+                }
+            });
+            if (bird.y < 0 || bird.y > gameCanvas.height) {
+                gameOver = true; //ends game
+            }
+        }
+
+        gameGravity = setInterval(function gravity() {
+            vy += 0.05;
+        });
+
+        function jump() {
+            vy = jumpHeight;
+        }
+
+        gamePipes = setInterval(function add() {
+            if (gameOver) {
+                return; //ends game
+            }
+            getPipes();
+            addPipes();
+            pipes.forEach(function(pipe) {
+                if (pipe[0].x < 0) {
+                    const index = pipes.indexOf(pipe);
+                    if (index > -1) {
+                        pipes.shift();
+                    }
+                }
+            });
+        }, 1500);
+
+        function clearCanvas() {
+            context.fillStyle = 'white';
+            context.strokeStyle = 'black';
+            context.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+            context.strokeRect(0, 0, gameCanvas.width, gameCanvas.height);
+        }
+
+        function drawBird() {
+            context.fillStyle = 'yellow';
+            context.strokeStyle = 'black';
+            context.fillRect(bird.x, bird.y, birdLength, birdHeight);
+            context.strokeRect(bird.x, bird.y, birdLength, birdHeight);
+        }
+
+
+        function random(min, max) {
+            return Math.round((Math.random() * (max - min) + min));
+        }
+
+        function getPipes() {
+            pipeHeight = random(50, gameCanvas.height - 50);
+            //console.log(pipeHeight);
+        }
+
+        function addPipes() {
+            //1st - top, 2nd - bottom
+            pipes.push([{x: gameCanvas.width, y: 0, height: (gameCanvas.height - pipeHeight) - pipeGap}, {x: gameCanvas.width, y: (gameCanvas.height - pipeHeight) + pipeGap, height: pipeHeight}]);
+            //console.log(pipes);
+        }
+
+        function drawPipes() {
+            context.fillStyle = 'darkgreen';
+            context.strokeStyle = 'black';
+
+            pipes.forEach(function(pipe) {
+                //top
+                context.fillRect(pipe[0].x, pipe[0].y, pipeWidth, pipe[0].height);
+                context.strokeRect(pipe[0].x, pipe[0].y, pipeWidth, pipe[0].height);
+
+                //bottom
+                context.fillRect(pipe[1].x, pipe[1].y, pipeWidth, pipe[1].height);
+                context.strokeRect(pipe[1].x, pipe[1].y, pipeWidth, pipe[1].height);
+            });
+        }
+
+        function collision(a, b) {
+            return a.x + birdLength > b.x &&
+                   a.x < b.x + pipeWidth &&
+                   a.y + birdHeight > b.y &&
+                   a.y < b.y + b.height
+        }
+
+        function reset() {
+            gameOver = false;
+            clearCanvas();
+            bird = {x: 85, y: 150};
+            score = 0;
+            document.getElementById("score").innerHTML = score;
+            vy = 0;
+            pipes = [];
+            pipeHeight = 0;
+
+            if (gameGravity != null) {
+                clearInterval(gameGravity);
+                gameGravity = null;
+            }
+
+            if (gamePipes != null) {
+                clearInterval(gamePipes);
+                gamePipes = null;
+            }
+
+            getPipes();
+            addPipes();
+            drawPipes();
+
+            drawBird();
+
+
+            // document.addEventListener("keydown", function(e) {
+            //     if (e.keyCode === 32) {
+            //         vy = jumpHeight;
+            //     }
+            // })
+            
+            main();
+            
+            gameGravity = setInterval(function gravity() {
+                vy += 0.05;
+            });
+
+            gamePipes = setInterval(function add() {
+                if (gameOver) {
+                    return; //ends game
+                }
+                getPipes();
+                addPipes();
+                pipes.forEach(function(pipe) {
+                    if (pipe[0].x < 0) {
+                        const index = pipes.indexOf(pipe);
+                        if (index > -1) {
+                            pipes.shift();
+                        }
+                    }
+                });
+            }, 1500);
+        }
+    
+    </script>
+</html>
