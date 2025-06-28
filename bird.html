@@ -4,7 +4,10 @@
         <title>Bird</title>
     </head>
     <body>
-        <div>Score: <span id="score">0</span></div>
+        <div id="scoreboard" style="display: flex; justify-content: space-between; width: 300px">
+            <div>Score: <span id="score">0</span></div>
+            <div>High: <span id="high">0</span></div>
+        </div>
         <canvas id="gameCanvas" width=300 height=300></canvas>
         <br>
         <button id="reset" onclick=reset()>Reset</button>
@@ -38,6 +41,8 @@
         let vx = 1.5; //pipe speed
 
         var score = 0; //user score
+        var high = 0;
+
         var gameOver = false; //ends game
 
         let gameGravity = null;
@@ -78,6 +83,11 @@
                 if (pipe[0].x === 84) {
                     score++;
                     document.getElementById("score").innerHTML = score;
+
+                    if (score > high) {
+                        high = score;
+                        document.getElementById("high").innerHTML = high;
+                    }
                 }
             });
             if (bird.y < 0 || bird.y > gameCanvas.height) {
@@ -110,7 +120,7 @@
         }, 1500);
 
         function clearCanvas() {
-            context.fillStyle = 'white';
+            context.fillStyle = '#87CEEB';
             context.strokeStyle = 'black';
             context.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
             context.strokeRect(0, 0, gameCanvas.width, gameCanvas.height);
