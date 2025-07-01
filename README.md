@@ -3,6 +3,6 @@ Simple version of Flappy bird make using HTML, CSS, and Javascript. Also incorpo
 <span>
   <p>
     <img src="https://github.com/user-attachments/assets/04347a57-3a7f-44a9-8967-eb3507af79fe">
-    <img src="https://github.com/user-attachments/assets/a320148f-c31d-4947-9cd6-de05b0e0d022">
+    <img src="https://github.com/user-attachments/assets/ba114013-83db-47fd-9c31-e07db5db1c3b">
   </p>
 </span>
