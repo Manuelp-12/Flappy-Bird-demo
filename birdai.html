@@ -10,6 +10,7 @@
 <body>
     <div id="scoreboard" style="display: flex; justify-content: space-between; width: 300px">
         <div>Generation: <span id="generation">1</span></div>
+        <div>Score: <span id="score">0</span></div>
         <div>High: <span id="high">0</span></div>
     </div>
     <canvas id="gameCanvas" width="300" height="300"></canvas>
@@ -28,9 +29,11 @@
 
     let pipes = [];
     let birds = [];
-    let highScore = 0;
-    let generation = 1;
     let frame = 0;
+    let generation = 1;
+
+    let displayScore = 0;
+    let bestDisplayScore = 0;
 
     const { Neat, Network, methods, architect } = neataptic;
     const populationSize = 50;
@@ -115,7 +118,8 @@
 
         pipes.push([
             { x: canvas.width, y: 0, height: pipeTopHeight },
-            { x: canvas.width, y: pipeBottomY, height: pipeBottomHeight }
+            { x: canvas.width, y: pipeBottomY, height: pipeBottomHeight },
+            false //add flag to track if pipe was passed
         ]);
     }
 
@@ -123,7 +127,7 @@
         context.fillStyle = "darkgreen";
         context.strokeStyle = "black";
         for (let pipePair of pipes) {
-            for (let pipe of pipePair) {
+            for (let pipe of pipePair.slice(0, 2)) {
                 context.fillRect(pipe.x, pipe.y, pipeWidth, pipe.height);
                 context.strokeRect(pipe.x, pipe.y, pipeWidth, pipe.height);
             }
@@ -131,13 +135,26 @@
     }
 
     function updatePipes() {
-        pipes.forEach(pipePair => {
+        for (let pipePair of pipes) {
             pipePair[0].x -= pipeSpeed;
             pipePair[1].x -= pipeSpeed;
-        });
+
+            // Check if pipe was passed
+            if (!pipePair[2] && pipePair[0].x + pipeWidth < 85) {
+                pipePair[2] = true;
+                displayScore++;
+                document.getElementById("score").innerText = displayScore;
+                if (displayScore > bestDisplayScore) {
+                    bestDisplayScore = displayScore;
+                    document.getElementById("high").innerText = bestDisplayScore;
+                }
+            }
+        }
+
         if (pipes.length > 0 && pipes[0][0].x + pipeWidth < 0) {
             pipes.shift();
         }
+
         frame++;
         if (frame % pipeSpawnInterval === 0) {
             addPipe();
@@ -146,6 +163,8 @@
 
     function startGeneration() {
         document.getElementById("generation").innerText = generation;
+        displayScore = 0;
+        document.getElementById("score").innerText = "0";
         frame = 0;
         resetPipes();
         birds = neat.population.map(genome => new Bird(genome));
@@ -155,10 +174,6 @@
     function endGeneration() {
         birds.forEach((bird, i) => {
             neat.population[i].score = bird.score;
-            if (bird.score > highScore) {
-                highScore = bird.score;
-                document.getElementById("high").innerText = highScore;
-            }
         });
 
         generation++;
