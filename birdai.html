@@ -55,27 +55,30 @@
             this.y = 150;
             this.vy = 0;
             this.alive = true;
-            this.score = 0;
+            this.score = 0; //helps indicate which birds are good - updates at 60 Hz (or however fast requestAnimationFrame is), has nothing to do with bird's in-game score
             this.brain = brain;
         }
 
         think() {
             const nextPipe = pipes.find(p => p[0].x + pipeWidth > this.x);
+
             if (!nextPipe) return;
 
             const pipeX = nextPipe[0].x;
             const topPipeBottomY = nextPipe[0].height;
             const bottomPipeTopY = nextPipe[1].y;
 
+            //variables that AI sees (divided by canvas width/height to improve awareness)
+
             const inputs = [
-                (pipeX - this.x) / canvas.width,
-                (this.y - topPipeBottomY) / canvas.height,
-                (this.y - bottomPipeTopY) / canvas.height
+                (pipeX - this.x) / canvas.width, //horizontal distance between bird and pipes
+                (this.y - topPipeBottomY) / canvas.height, //vertical distance between bird and bottom pipe
+                (this.y - bottomPipeTopY) / canvas.height //vertical distance between bird and top pipe
             ];
 
             const output = this.brain.activate(inputs);
-            if (output[0] > 0.5) {
-                this.vy = jumpHeight;
+            if (output[0] > 0.5) { //arbitrary value 0.5 - 50% chance bird will flap randomly
+                this.vy = jumpHeight; //only 1 value for output array - simple game
             }
         }
 
@@ -139,10 +142,10 @@
             pipePair[0].x -= pipeSpeed;
             pipePair[1].x -= pipeSpeed;
 
-            // Check if pipe was passed
+            // Check if pipe was passed - sets boolean to true
             if (!pipePair[2] && pipePair[0].x + pipeWidth < 85) {
                 pipePair[2] = true;
-                displayScore++;
+                displayScore++; //update game score
                 document.getElementById("score").innerText = displayScore;
                 if (displayScore > bestDisplayScore) {
                     bestDisplayScore = displayScore;
