@@ -31,22 +31,22 @@
         var pipeGap = 35; //distance between pipes
         var pipeWidth = 20; //width of pipes
 
-        getPipes();
+        const pipeSpawnInterval = 90;
+        var frame = 0;
+
         addPipes();
         drawPipes();
 
-        var jumpHeight = -4.25; //jump height
+        var jumpHeight = -3.75; //jump height
 
-        let vy = 0; //gravity
+        const gravity = 0.15;
+        let vy = 0;
         let vx = 1.5; //pipe speed
 
         var score = 0; //user score
         var high = 0;
 
         var gameOver = false; //ends game
-
-        let gameGravity = null;
-        let gamePipes = null;
 
         drawBird();
 
@@ -58,66 +58,47 @@
 
         document.addEventListener("click", jump);
 
-        main();
+        requestAnimationFrame(main);
 
-        function main() {
-            if (gameOver) {
-                return; //ends game
-            }
-
-            requestAnimationFrame(main)
+        function main() {          
             clearCanvas();
-            drawBird();
+
             drawPipes();
-            bird.y += vy
+            updatePipes();
+
+            drawBird();
+            updateBird();
+            
             pipes.forEach(function(pipe) {
-                pipe[0].x -= vx;
-                pipe[1].x -= vx;
 
                 pipe.forEach(function(pipet) {
                     if (collision(bird, pipet)) {
-                        gameOver = true;
+                        gameOver = true; //ends game
                     }
                 });
 
-                if (pipe[0].x === 84) {
-                    score++;
-                    document.getElementById("score").innerHTML = score;
-
-                    if (score > high) {
-                        high = score;
-                        document.getElementById("high").innerHTML = high;
-                    }
-                }
             });
+
             if (bird.y < 0 || bird.y > gameCanvas.height) {
                 gameOver = true; //ends game
             }
+
+            if (gameOver) {
+                return;
+            }
+            else {
+                requestAnimationFrame(main);
+            }
         }
 
-        gameGravity = setInterval(function gravity() {
-            vy += 0.05;
-        });
+        function updateBird() {
+            bird.y += vy;
+            vy += gravity;
+        }
 
         function jump() {
             vy = jumpHeight;
         }
-
-        gamePipes = setInterval(function add() {
-            if (gameOver) {
-                return; //ends game
-            }
-            getPipes();
-            addPipes();
-            pipes.forEach(function(pipe) {
-                if (pipe[0].x < 0) {
-                    const index = pipes.indexOf(pipe);
-                    if (index > -1) {
-                        pipes.shift();
-                    }
-                }
-            });
-        }, 1500);
 
         function clearCanvas() {
             context.fillStyle = '#87CEEB';
@@ -140,13 +121,17 @@
 
         function getPipes() {
             pipeHeight = random(50, gameCanvas.height - 50);
-            //console.log(pipeHeight);
         }
 
         function addPipes() {
             //1st - top, 2nd - bottom
-            pipes.push([{x: gameCanvas.width, y: 0, height: (gameCanvas.height - pipeHeight) - pipeGap}, {x: gameCanvas.width, y: (gameCanvas.height - pipeHeight) + pipeGap, height: pipeHeight}]);
-            //console.log(pipes);
+            getPipes();
+
+            pipes.push([
+                {x: gameCanvas.width, y: 0, height: (gameCanvas.height - pipeHeight) - pipeGap}, 
+                {x: gameCanvas.width, y: (gameCanvas.height - pipeHeight) + pipeGap, height: pipeHeight},
+                false
+            ]); //var for if pipe is passed or not
         }
 
         function drawPipes() {
@@ -164,6 +149,34 @@
             });
         }
 
+        function updatePipes() {
+            pipes.forEach(function(pipe) {
+                pipe[0].x -= vx;
+                pipe[1].x -= vx;
+
+                if (!pipe[2] && pipe[0].x + pipeWidth < bird.x) {
+                    pipe[2] = true;
+
+                    score++;
+                    document.getElementById("score").innerHTML = score;
+
+                    if (score > high) {
+                        high = score;
+                        document.getElementById("high").innerHTML = high;
+                    }
+                }
+            });
+
+            if (pipes.length > 0 && pipes[0][0].x + pipeWidth < 0) { //remove top element in pipes if off screen
+                pipes.shift();
+            }
+
+            frame++;
+            if (frame % pipeSpawnInterval == 0) {
+                addPipes();
+            }
+        }   
+
         function collision(a, b) {
             return a.x + birdLength > b.x &&
                    a.x < b.x + pipeWidth &&
@@ -180,51 +193,14 @@
             vy = 0;
             pipes = [];
             pipeHeight = 0;
+            frame = 0;
 
-            if (gameGravity != null) {
-                clearInterval(gameGravity);
-                gameGravity = null;
-            }
-
-            if (gamePipes != null) {
-                clearInterval(gamePipes);
-                gamePipes = null;
-            }
-
-            getPipes();
             addPipes();
             drawPipes();
 
-            drawBird();
-
-
-            // document.addEventListener("keydown", function(e) {
-            //     if (e.keyCode === 32) {
-            //         vy = jumpHeight;
-            //     }
-            // })
+            drawBird();           
             
-            main();
-            
-            gameGravity = setInterval(function gravity() {
-                vy += 0.05;
-            });
-
-            gamePipes = setInterval(function add() {
-                if (gameOver) {
-                    return; //ends game
-                }
-                getPipes();
-                addPipes();
-                pipes.forEach(function(pipe) {
-                    if (pipe[0].x < 0) {
-                        const index = pipes.indexOf(pipe);
-                        if (index > -1) {
-                            pipes.shift();
-                        }
-                    }
-                });
-            }, 1500);
+            requestAnimationFrame(main);
         }
     
     </script>
