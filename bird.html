@@ -2,6 +2,12 @@
 <html>
     <head>
         <title>Bird</title>
+        <style>
+            #gameCanvas {
+                background-image: url("./images/backgroundimg.png");
+                background-size: cover;
+            }
+        </style>
     </head>
     <body>
         <div id="scoreboard" style="display: flex; justify-content: space-between; width: 300px">
@@ -19,19 +25,45 @@
         context.strokeRect(0, 0, gameCanvas.width, gameCanvas.height);
 
         //declare bird variable w/ two coordinates
-        let bird = {x: 85, y: 150};
+        let startX = gameCanvas.width/4;
+        let startY = gameCanvas.height/2;
 
-        const birdLength = 10; //bird length
-        const birdHeight = 10; //bird height
+        let bird = {x: startX, y: startY};
+
+        let birdImg = new Image();
+        birdImg.src = "./images/birdimg.png";
+
+        //image height/width: 410 x 290
+
+        var birdLength = 30; //bird length
+        var birdHeight = 20; //bird height
+
+        var upBirdLength = 30;
+        var upBirdHeight = 20;
+
+        let upBirdImg = new Image();
+        upBirdImg.src = "./images/birdimg.png";
+
+        var downBirdLength = 20;
+        var downBirdHeight = 30;
+
+        let downBirdImg = new Image();
+        downBirdImg.src = "./images/downbird.png";
         
         //initialize empty pipes array
         let pipes = [];
-        
-        var pipeHeight = 0; //random number for where pipes go
-        var pipeGap = 35; //distance between pipes
-        var pipeWidth = 20; //width of pipes
 
-        const pipeSpawnInterval = 90;
+        let topPipeImg  = new Image();
+        topPipeImg.src = "./images/toppipe.png"; //dimensions: 839 x 237
+
+        let bottomPipeImg = new Image();
+        bottomPipeImg.src = "./images/bottompipe.png"; //dimensions: 301 x 843
+        
+        var pipeHeight = 2 * gameCanvas.height/3; //maximum height of pipe
+        var pipeGap = gameCanvas.height/3; //distance between pipes
+        var pipeWidth = gameCanvas.height/7.5; //width of pipes
+
+        const pipeSpawnInterval = 110; //frequency of pipes spawned
         var frame = 0;
 
         addPipes();
@@ -58,7 +90,9 @@
 
         document.addEventListener("click", jump);
 
-        requestAnimationFrame(main);
+        window.onload = function() {
+            requestAnimationFrame(main);
+        }
 
         function main() {          
             clearCanvas();
@@ -68,6 +102,18 @@
 
             drawBird();
             updateBird();
+
+            //update falling bird
+            if (vy > 1.5) {
+                birdImg = downBirdImg;
+                birdLength = downBirdLength;
+                birdHeight = downBirdHeight;
+            }
+            else {
+                birdImg = upBirdImg;
+                birdLength = upBirdLength;
+                birdHeight = upBirdHeight;
+            }
             
             pipes.forEach(function(pipe) {
 
@@ -101,35 +147,37 @@
         }
 
         function clearCanvas() {
-            context.fillStyle = '#87CEEB';
-            context.strokeStyle = 'black';
-            context.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
-            context.strokeRect(0, 0, gameCanvas.width, gameCanvas.height);
+            // context.fillStyle = '#87CEEB';
+            // context.strokeStyle = 'black';
+            // context.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+            // context.strokeRect(0, 0, gameCanvas.width, gameCanvas.height);
+            context.clearRect(0, 0,gameCanvas.width, gameCanvas.height);
         }
 
         function drawBird() {
             context.fillStyle = 'yellow';
             context.strokeStyle = 'black';
-            context.fillRect(bird.x, bird.y, birdLength, birdHeight);
-            context.strokeRect(bird.x, bird.y, birdLength, birdHeight);
+            // context.fillRect(bird.x, bird.y, birdLength, birdHeight);
+            // context.strokeRect(bird.x, bird.y, birdLength, birdHeight);
+            context.drawImage(birdImg, bird.x, bird.y, birdLength, birdHeight);
         }
-
 
         function random(min, max) {
             return Math.round((Math.random() * (max - min) + min));
         }
 
         function getPipes() {
-            pipeHeight = random(50, gameCanvas.height - 50);
+            pipeHeight = random(gameCanvas.height/6, 5 * gameCanvas.height/6);
         }
 
         function addPipes() {
             //1st - top, 2nd - bottom
-            getPipes();
+            //getPipes();
+            let randomHeight = -(gameCanvas.height/12) - Math.random()*(3 * pipeHeight/4);
 
             pipes.push([
-                {x: gameCanvas.width, y: 0, height: (gameCanvas.height - pipeHeight) - pipeGap}, 
-                {x: gameCanvas.width, y: (gameCanvas.height - pipeHeight) + pipeGap, height: pipeHeight},
+                {x: gameCanvas.width, y: randomHeight},
+                {x: gameCanvas.width, y: randomHeight + pipeHeight + pipeGap},
                 false
             ]); //var for if pipe is passed or not
         }
@@ -140,12 +188,16 @@
 
             pipes.forEach(function(pipe) {
                 //top
-                context.fillRect(pipe[0].x, pipe[0].y, pipeWidth, pipe[0].height);
-                context.strokeRect(pipe[0].x, pipe[0].y, pipeWidth, pipe[0].height);
+                // context.fillRect(pipe[0].x, pipe[0].y, pipeWidth, pipeHeight);
+                // context.strokeRect(pipe[0].x, pipe[0].y, pipeWidth, pipeHeight);
+
+                context.drawImage(topPipeImg, pipe[0].x, pipe[0].y, pipeWidth, pipeHeight);
 
                 //bottom
-                context.fillRect(pipe[1].x, pipe[1].y, pipeWidth, pipe[1].height);
-                context.strokeRect(pipe[1].x, pipe[1].y, pipeWidth, pipe[1].height);
+                // context.fillRect(pipe[1].x, pipe[1].y, pipeWidth, pipeHeight);
+                // context.strokeRect(pipe[1].x, pipe[1].y, pipeWidth, pipeHeight);
+
+                context.drawImage(bottomPipeImg, pipe[1].x, pipe[1].y, pipeWidth, pipeHeight);
             });
         }
 
@@ -181,18 +233,18 @@
             return a.x + birdLength > b.x &&
                    a.x < b.x + pipeWidth &&
                    a.y + birdHeight > b.y &&
-                   a.y < b.y + b.height
+                   a.y < b.y + pipeHeight
         }
 
         function reset() {
             gameOver = false;
             clearCanvas();
-            bird = {x: 85, y: 150};
+            bird = {x: startX, y: startY};
             score = 0;
             document.getElementById("score").innerHTML = score;
             vy = 0;
             pipes = [];
-            pipeHeight = 0;
+            //pipeHeight = 0;
             frame = 0;
 
             addPipes();
