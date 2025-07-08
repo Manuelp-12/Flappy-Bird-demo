@@ -147,18 +147,14 @@
         }
 
         function clearCanvas() {
-            // context.fillStyle = '#87CEEB';
-            // context.strokeStyle = 'black';
-            // context.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
-            // context.strokeRect(0, 0, gameCanvas.width, gameCanvas.height);
+            context.strokeStyle = 'black';
             context.clearRect(0, 0,gameCanvas.width, gameCanvas.height);
+            context.strokeRect(0, 0, gameCanvas.width, gameCanvas.height);
         }
 
         function drawBird() {
             context.fillStyle = 'yellow';
             context.strokeStyle = 'black';
-            // context.fillRect(bird.x, bird.y, birdLength, birdHeight);
-            // context.strokeRect(bird.x, bird.y, birdLength, birdHeight);
             context.drawImage(birdImg, bird.x, bird.y, birdLength, birdHeight);
         }
 
@@ -172,7 +168,6 @@
 
         function addPipes() {
             //1st - top, 2nd - bottom
-            //getPipes();
             let randomHeight = -(gameCanvas.height/12) - Math.random()*(3 * pipeHeight/4);
 
             pipes.push([
@@ -188,15 +183,9 @@
 
             pipes.forEach(function(pipe) {
                 //top
-                // context.fillRect(pipe[0].x, pipe[0].y, pipeWidth, pipeHeight);
-                // context.strokeRect(pipe[0].x, pipe[0].y, pipeWidth, pipeHeight);
-
                 context.drawImage(topPipeImg, pipe[0].x, pipe[0].y, pipeWidth, pipeHeight);
 
                 //bottom
-                // context.fillRect(pipe[1].x, pipe[1].y, pipeWidth, pipeHeight);
-                // context.strokeRect(pipe[1].x, pipe[1].y, pipeWidth, pipeHeight);
-
                 context.drawImage(bottomPipeImg, pipe[1].x, pipe[1].y, pipeWidth, pipeHeight);
             });
         }
@@ -244,7 +233,6 @@
             document.getElementById("score").innerHTML = score;
             vy = 0;
             pipes = [];
-            //pipeHeight = 0;
             frame = 0;
 
             addPipes();
