@@ -1,5 +1,5 @@
 # Flappy bird
-Simple version of Flappy bird made using HTML, CSS, and Javascript. Also incorporates NEAT AI algorithm which continuously improves over time and beats the game.
+Simple version of Flappy bird made using HTML, CSS, and Javascript. Also incorporates NEAT AI algorithm which continuously improves over time and beats the game!
 <span>
   <p>
     <img src="https://github.com/user-attachments/assets/04347a57-3a7f-44a9-8967-eb3507af79fe">
