@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flappy AI</title>
+    <script src="./neataptic.js"></script>
+    <style>
+        canvas { border: 1px solid black; }
+
+        #gameCanvas {
+                background-image: url("./images/backgroundimg.png");
+                background-size: cover;
+        }
+    </style>
+</head>
+<body>
+    <div id="scoreboard" style="display: flex; justify-content: space-between; width: 300px">
+        <div>Generation: <span id="generation">1</span></div>
+        <div>Score: <span id="score">0</span></div>
+        <div>High: <span id="high">0</span></div>
+    </div>
+    <canvas id="gameCanvas" width="300" height="300"></canvas>
+
+    <script>
+    const canvas = document.getElementById("gameCanvas");
+    const context = canvas.getContext("2d");
+
+    const length = 30;
+    const height = 20;
+    var birdLength = length;
+    var birdHeight = height;
+    let birdImg = new Image();
+    birdImg.src = "./images/birdimg.png";
+
+    var upBirdLength = length;
+    var upBirdHeight = height;
+    let upBirdImg = new Image();
+    upBirdImg.src = "./images/birdimg.png";
+
+    var downBirdLength = height;
+    var downBirdHeight = length;
+    let downBirdImg = new Image();
+    downBirdImg.src = "./images/downbird.png";
+
+    const pipeWidth = 40;
+    const pipeHeight = 200;
+    const pipeGap = 100;
+    const jumpHeight = -3.75;
+    const gravity = 0.15;
+    const pipeSpeed = 1.5;
+    const pipeSpawnInterval = 100;
+
+    let topPipeImg  = new Image();
+    topPipeImg.src = "./images/toppipe.png";
+    let bottomPipeImg = new Image();
+    bottomPipeImg.src = "./images/bottompipe.png";
+
+    let pipes = [];
+    let birds = [];
+    let frame = 0;
+    let generation = 1;
+
+    let displayScore = 0;
+    let bestDisplayScore = 0;
+
+    const { Neat, Network, methods, architect } = neataptic;
+    const populationSize = 50;
+
+    const neat = new Neat(
+        3, 1, null,
+        {
+            mutation: methods.mutation.ALL,
+            popsize: populationSize,
+            mutationRate: 0.3,
+            elitism: Math.round(0.1 * populationSize),
+            network: new architect.Perceptron(3, 6, 1)
+        }
+    );
+
+    class Bird {
+        constructor(brain) {
+            this.x = gameCanvas.width/4; //85 on 300w
+            this.y = gameCanvas.height/2; //150 on 300h
+            this.vy = 0;
+            this.alive = true;
+            this.score = 0; //helps indicate which birds are good - updates at 60 Hz (or however fast requestAnimationFrame is), has nothing to do with bird's in-game score
+            this.brain = brain;
+        }
+
+        think() {
+            const nextPipe = pipes.find(p => p[0].x + pipeWidth > this.x);
+
+            if (!nextPipe) return;
+
+            const pipeX = nextPipe[0].x;
+            const topPipeBottomY = nextPipe[0].height;
+            const bottomPipeTopY = nextPipe[1].y;
+
+            //variables that AI sees (divided by canvas width/height to improve awareness)
+
+            const inputs = [
+                (pipeX - this.x) / canvas.width, //horizontal distance between bird and pipes
+                (this.y - topPipeBottomY) / canvas.height, //vertical distance between bird and bottom pipe
+                (this.y - bottomPipeTopY) / canvas.height //vertical distance between bird and top pipe
+            ];
+
+            const output = this.brain.activate(inputs);
+            if (output[0] > 0.5) { //arbitrary value 0.5 - 50% chance bird will flap randomly
+                this.vy = jumpHeight; //only 1 value for output array - simple game
+            }
+        }
+
+        update() {
+            this.y += this.vy;
+            this.vy += gravity;
+            this.score++;
+
+            if (this.vy > 1.5) {
+            birdImg = downBirdImg;
+            birdLength = downBirdLength;
+            birdHeight = downBirdHeight;
+            }
+            else {
+                birdImg = upBirdImg;
+                birdLength = upBirdLength;
+                birdHeight = upBirdHeight;
+            }
+        }
+
+        draw() {
+            // context.fillStyle = "yellow";
+            // context.strokeStyle = "black";
+            // context.fillRect(this.x, this.y, birdLength, birdHeight);
+            // context.strokeRect(this.x, this.y, birdLength, birdHeight);
+            context.drawImage(birdImg, this.x, this.y, birdLength, birdHeight);
+        }
+
+        isDead() {
+            if (this.y < 0 || this.y + birdHeight > canvas.height) return true;
+            return pipes.some(pipe => collision(this, pipe[0]) || collision(this, pipe[1]));
+        }
+    }
+
+    function collision(bird, pipe) {
+        return bird.x + birdLength > pipe.x &&
+               bird.x < pipe.x + pipeWidth &&
+               bird.y + birdHeight > pipe.y &&
+               bird.y < pipe.y + pipeHeight
+    }
+
+    function resetPipes() {
+        pipes = [];
+        addPipe();
+    }
+
+    function addPipe() {
+        const totalHeight = canvas.height;
+        const pipeTopHeight = Math.round(Math.random() * (totalHeight - 100) + 25);
+        const pipeBottomY = pipeTopHeight + pipeGap;
+        const pipeBottomHeight = totalHeight - pipeBottomY;
+
+        let randomHeight = -(gameCanvas.height/12) - Math.random()*(3 * pipeHeight/4);
+
+        pipes.push([
+            { x: canvas.width, y: randomHeight, height: randomHeight + pipeHeight },
+            { x: canvas.width, y: randomHeight + pipeHeight + pipeGap, height: pipeHeight },
+            false //add flag to track if pipe was passed
+        ]);
+    }
+
+    function drawPipes() {
+        context.fillStyle = "darkgreen";
+        context.strokeStyle = "black";
+
+        pipes.forEach(function(pipe) {
+            context.drawImage(topPipeImg, pipe[0].x, pipe[0].y, pipeWidth, pipeHeight);
+
+            context.drawImage(bottomPipeImg, pipe[1].x, pipe[1].y, pipeWidth, pipeHeight);
+        });
+        // for (let pipePair of pipes) {
+        //     for (let pipe of pipePair.slice(0, 2)) {
+        //         context.fillRect(pipe.x, pipe.y, pipeWidth, pipe.height);
+        //         context.strokeRect(pipe.x, pipe.y, pipeWidth, pipe.height);
+        //     }
+        // }
+    }
+
+    function updatePipes() {
+        for (let pipePair of pipes) {
+            pipePair[0].x -= pipeSpeed;
+            pipePair[1].x -= pipeSpeed;
+
+            // Check if pipe was passed - sets boolean to true
+            if (!pipePair[2] && pipePair[0].x + pipeWidth < 85) {
+                pipePair[2] = true;
+                displayScore++; //update game score
+                document.getElementById("score").innerText = displayScore;
+                if (displayScore > bestDisplayScore) {
+                    bestDisplayScore = displayScore;
+                    document.getElementById("high").innerText = bestDisplayScore;
+                }
+            }
+        }
+
+        if (pipes.length > 0 && pipes[0][0].x + pipeWidth < 0) {
+            pipes.shift();
+        }
+
+        frame++;
+        if (frame % pipeSpawnInterval === 0) {
+            addPipe();
+        }
+    }
+
+    function startGeneration() {
+        document.getElementById("generation").innerText = generation;
+        displayScore = 0;
+        document.getElementById("score").innerText = "0";
+        frame = 0;
+        resetPipes();
+        birds = neat.population.map(genome => new Bird(genome));
+        requestAnimationFrame(gameLoop);
+    }
+
+    function endGeneration() {
+        birds.forEach((bird, i) => {
+            neat.population[i].score = bird.score;
+        });
+
+        generation++;
+        neat.evolve().then(startGeneration);
+    }
+
+    function gameLoop() {
+        //context.fillStyle = "#87CEEB";
+        //context.fillRect(0, 0, canvas.width, canvas.height);
+        context.clearRect(0, 0,gameCanvas.width, gameCanvas.height);
+
+        drawPipes();
+        updatePipes();
+
+        let allDead = true;
+        for (let bird of birds) {
+            if (!bird.alive) continue;
+
+            bird.think();
+            bird.update();
+            bird.draw();
+
+            if (bird.isDead()) {
+                bird.alive = false;
+            } else {
+                allDead = false;
+            }
+        }
+
+        if (allDead) {
+            endGeneration();
+        } else {
+            requestAnimationFrame(gameLoop);
+        }
+    }
+
+    startGeneration();
+    </script>
+</body>
+</html>
