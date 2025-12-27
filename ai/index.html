@@ -2,12 +2,12 @@
 <html>
 <head>
     <title>Flappy AI</title>
-    <script src="./neataptic.js"></script>
+    <script src="../neataptic.js"></script>
     <style>
         canvas { border: 1px solid black; }
 
         #gameCanvas {
-                background-image: url("./images/backgroundimg.png");
+                background-image: url("../images/backgroundimg.png");
                 background-size: cover;
         }
     </style>
@@ -29,17 +29,17 @@
     var birdLength = length;
     var birdHeight = height;
     let birdImg = new Image();
-    birdImg.src = "./images/birdimg.png";
+    birdImg.src = "../images/birdimg.png";
 
     var upBirdLength = length;
     var upBirdHeight = height;
     let upBirdImg = new Image();
-    upBirdImg.src = "./images/birdimg.png";
+    upBirdImg.src = "../images/birdimg.png";
 
     var downBirdLength = height;
     var downBirdHeight = length;
     let downBirdImg = new Image();
-    downBirdImg.src = "./images/downbird.png";
+    downBirdImg.src = "../images/downbird.png";
 
     const pipeWidth = 40;
     const pipeHeight = 200;
@@ -50,9 +50,9 @@
     const pipeSpawnInterval = 100;
 
     let topPipeImg  = new Image();
-    topPipeImg.src = "./images/toppipe.png";
+    topPipeImg.src = "../images/toppipe.png";
     let bottomPipeImg = new Image();
-    bottomPipeImg.src = "./images/bottompipe.png";
+    bottomPipeImg.src = "../images/bottompipe.png";
 
     let pipes = [];
     let birds = [];
